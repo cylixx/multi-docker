@@ -1,0 +1,22 @@
+language: generic
+sudo: required
+    - docker
+
+before_install:
+    - docker build -t cylixx/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true cylixx/react-test npm test
+
+after_success:
+    - docker build -t cylixx/multi-client ./client
+    - docker build -t cylixx/multi-nginx ./nginx
+    - docker build -t cylixx/multi-server ./server
+    - docker build -t cylixx/multi-worker ./worker
+    # Log into the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push cylixx/multi-client
+    - docker push cylixx/multi-nginx
+    - docker push cylixx/multi-server
+    - docker push cylixx/multi-worker
